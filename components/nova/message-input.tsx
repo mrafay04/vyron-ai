@@ -308,7 +308,7 @@ export function MessageInput({
                 ? 'Listening...'
                 : 'Message VYRON…'
             }
-            className="max-h-40 flex-1 resize-none bg-transparent py-2 text-sm leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
+            className="max-h-40 flex-1 resize-none bg-transparent py-2 text-base leading-relaxed text-foreground outline-none placeholder:text-muted-foreground"
           />
 
           <button
