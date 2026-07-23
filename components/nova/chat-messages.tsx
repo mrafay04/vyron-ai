@@ -24,6 +24,7 @@ type ChatMessagesProps = {
 type TypewriterTextProps = {
   content: string
   shouldAnimate: boolean
+  onAnimationComplete?: () => void
 }
 
 function TypingIndicator() {
@@ -264,6 +265,7 @@ function MarkdownContent({ content }: { content: string }) {
 function TypewriterText({
   content,
   shouldAnimate,
+  onAnimationComplete,
 }: TypewriterTextProps) {
   const [displayedContent, setDisplayedContent] = useState(
     shouldAnimate ? '' : content,
@@ -285,13 +287,14 @@ function TypewriterText({
 
       if (currentIndex >= content.length) {
         window.clearInterval(typingInterval)
+        onAnimationComplete?.()
       }
     }, 15)
 
     return () => {
       window.clearInterval(typingInterval)
     }
-  }, [content, shouldAnimate])
+  }, [content, onAnimationComplete, shouldAnimate])
 
   const isAnimationComplete =
     displayedContent.length >= content.length
@@ -316,6 +319,9 @@ export function ChatMessages({
 }: ChatMessagesProps) {
   const { data: session } = useSession()
   const bottomRef = useRef<HTMLDivElement>(null)
+  const hasInitializedRef = useRef(false)
+  const previousMessageIdsRef = useRef<string[]>([])
+  const animatedAssistantIdsRef = useRef<Set<string>>(new Set())
 
   const userInitials = session?.user?.name
     ? session.user.name
@@ -332,6 +338,41 @@ export function ChatMessages({
     -1,
   )
 
+
+  useEffect(() => {
+    const currentMessageIds = messages.map((message) => message.id)
+
+    if (!hasInitializedRef.current) {
+      messages.forEach((message) => {
+        if (message.role === 'assistant') {
+          animatedAssistantIdsRef.current.add(message.id)
+        }
+      })
+
+      previousMessageIdsRef.current = currentMessageIds
+      hasInitializedRef.current = true
+      return
+    }
+
+    const previousMessageIds = previousMessageIdsRef.current
+
+    const isAppendOnly =
+      previousMessageIds.length <= currentMessageIds.length &&
+      previousMessageIds.every(
+        (messageId, index) => currentMessageIds[index] === messageId,
+      )
+
+    if (!isAppendOnly) {
+      messages.forEach((message) => {
+        if (message.role === 'assistant') {
+          animatedAssistantIdsRef.current.add(message.id)
+        }
+      })
+    }
+
+    previousMessageIdsRef.current = currentMessageIds
+  }, [messages])
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
       behavior: 'smooth',
@@ -344,9 +385,11 @@ export function ChatMessages({
         const isUser = message.role === 'user'
 
         const shouldAnimate =
+          hasInitializedRef.current &&
           message.role === 'assistant' &&
           index === lastAssistantMessageIndex &&
-          !isTyping
+          !isTyping &&
+          !animatedAssistantIdsRef.current.has(message.id)
 
         return (
           <div
@@ -380,6 +423,9 @@ export function ChatMessages({
                 <TypewriterText
                   content={message.content}
                   shouldAnimate={shouldAnimate}
+                  onAnimationComplete={() => {
+                    animatedAssistantIdsRef.current.add(message.id)
+                  }}
                 />
               )}
             </div>

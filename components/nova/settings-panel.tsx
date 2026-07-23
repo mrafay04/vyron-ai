@@ -12,6 +12,7 @@ import {
   Sun,
   Volume2,
   VolumeX,
+  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ type SettingsPanelProps = {
   onSpeechRateChange: (rate: number) => void
   speechLanguage: string
   onSpeechLanguageChange: (language: string) => void
+  onClose: () => void
 }
 
 const themeOptions = [
@@ -72,6 +74,7 @@ export function SettingsPanel({
   onSpeechRateChange,
   speechLanguage,
   onSpeechLanguageChange,
+  onClose,
 }: SettingsPanelProps) {
   const [mounted, setMounted] = useState(false)
 
@@ -84,16 +87,42 @@ export function SettingsPanel({
     setMounted(true)
   }, [])
 
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [onClose])
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Settings
-        </h1>
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Settings
+          </h1>
 
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage VYRON appearance and voice preferences.
-        </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Manage VYRON appearance and voice preferences.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-background text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+          aria-label="Close settings"
+          title="Close settings"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="space-y-6">

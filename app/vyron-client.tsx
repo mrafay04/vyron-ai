@@ -871,6 +871,7 @@ ${text || 'Analyze this file'}`
               onSpeechLanguageChange={
                 setSpeechLanguage
               }
+              onClose={() => setActiveMenu('chat')}
             />
           ) : isLoadingConversation ? (
             <div className="flex h-full items-center justify-center">
